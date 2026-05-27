@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { TrendingUp, BarChart3, DollarSign, BookOpen, ArrowRight, Zap, Shield, Globe, ChevronRight } from 'lucide-react'
-import { PARTIDOS_MOCK } from '@/lib/api/mock-data'
 import { getPartidosHoy } from '@/lib/api/football-data'
 import { adaptarPartidoFD } from '@/lib/api/adapters'
 import { Partido } from '@/types'
@@ -14,8 +13,8 @@ async function obtenerPartidos(): Promise<Partido[]> {
   try {
     const raw = await getPartidosHoy()
     if (raw.length > 0) return raw.map(adaptarPartidoFD)
-  } catch { /* fallback */ }
-  return PARTIDOS_MOCK
+  } catch { /* sin datos */ }
+  return []
 }
 
 export default async function Home() {

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import TarjetaPartido from '@/components/partidos/TarjetaPartido'
-import { PARTIDOS_MOCK } from '@/lib/api/mock-data'
 import { cn } from '@/lib/utils'
 import { Partido } from '@/types'
 import { Loader2 } from 'lucide-react'
@@ -34,9 +33,9 @@ export default function PartidosPage() {
       try {
         const res = await fetch('/api/partidos')
         const data = await res.json()
-        setPartidos(data.length > 0 ? data : PARTIDOS_MOCK)
+        setPartidos(data)
       } catch {
-        setPartidos(PARTIDOS_MOCK)
+        setPartidos([])
       } finally {
         setCargando(false)
       }

@@ -7,8 +7,7 @@ export async function GET() {
     const raw = await getPartidosHoy()
     const partidos = raw.map(adaptarPartidoFD)
     return NextResponse.json(partidos)
-  } catch (error) {
-    console.error('Error fetching partidos:', error)
+  } catch {
     return NextResponse.json([], { status: 200 })
   }
 }
