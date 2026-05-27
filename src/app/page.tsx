@@ -2,11 +2,25 @@ import Link from 'next/link'
 import { TrendingUp, BarChart3, DollarSign, BookOpen, ArrowRight, Zap, Shield, Globe } from 'lucide-react'
 import TarjetaPartido from '@/components/partidos/TarjetaPartido'
 import { PARTIDOS_MOCK } from '@/lib/api/mock-data'
+import { getPartidosHoy } from '@/lib/api/football-data'
+import { adaptarPartidoFD } from '@/lib/api/adapters'
+import { Partido } from '@/types'
 
-const enVivo = PARTIDOS_MOCK.filter(p => p.estado === 'en_vivo')
-const proximos = PARTIDOS_MOCK.filter(p => p.estado === 'programado').slice(0, 4)
+async function obtenerPartidos(): Promise<Partido[]> {
+  try {
+    const raw = await getPartidosHoy()
+    if (raw.length > 0) return raw.map(adaptarPartidoFD)
+  } catch {
+    // fallback a mock si la API falla
+  }
+  return PARTIDOS_MOCK
+}
 
-export default function Home() {
+export default async function Home() {
+  const partidos = await obtenerPartidos()
+  const enVivo = partidos.filter(p => p.estado === 'en_vivo')
+  const proximos = partidos.filter(p => p.estado === 'programado').slice(0, 6)
+
   return (
     <div className="space-y-10">
       {/* Hero */}
@@ -83,17 +97,19 @@ export default function Home() {
       )}
 
       {/* Próximos partidos */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white">Próximos partidos</h2>
-          <Link href="/partidos" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-            Ver todos <ArrowRight size={14} />
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {proximos.map(p => <TarjetaPartido key={p.id} partido={p} />)}
-        </div>
-      </section>
+      {proximos.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">Partidos de hoy</h2>
+            <Link href="/partidos" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+              Ver todos <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {proximos.map(p => <TarjetaPartido key={p.id} partido={p} />)}
+          </div>
+        </section>
+      )}
 
       {/* CTA Cuotas */}
       <section className="bg-gradient-to-r from-indigo-900/30 to-purple-900/20 border border-indigo-500/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">

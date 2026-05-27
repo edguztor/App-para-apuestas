@@ -1,17 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TarjetaPartido from '@/components/partidos/TarjetaPartido'
 import { PARTIDOS_MOCK } from '@/lib/api/mock-data'
 import { cn } from '@/lib/utils'
-import { Deporte } from '@/types'
+import { Partido } from '@/types'
+import { Loader2 } from 'lucide-react'
 
-const DEPORTES: { key: string; label: string; emoji: string }[] = [
+const DEPORTES = [
   { key: 'todos', label: 'Todos', emoji: '🌐' },
   { key: 'futbol', label: 'Fútbol', emoji: '⚽' },
   { key: 'baloncesto', label: 'Básquet', emoji: '🏀' },
   { key: 'tenis', label: 'Tenis', emoji: '🎾' },
-  { key: 'americano', label: 'Americano', emoji: '🏈' },
 ]
 
 const ESTADOS = [
@@ -25,8 +25,26 @@ export default function PartidosPage() {
   const [deporte, setDeporte] = useState('todos')
   const [estado, setEstado] = useState('todos')
   const [busqueda, setBusqueda] = useState('')
+  const [partidos, setPartidos] = useState<Partido[]>([])
+  const [cargando, setCargando] = useState(true)
 
-  const filtrados = PARTIDOS_MOCK.filter(p => {
+  useEffect(() => {
+    async function cargar() {
+      setCargando(true)
+      try {
+        const res = await fetch('/api/partidos')
+        const data = await res.json()
+        setPartidos(data.length > 0 ? data : PARTIDOS_MOCK)
+      } catch {
+        setPartidos(PARTIDOS_MOCK)
+      } finally {
+        setCargando(false)
+      }
+    }
+    cargar()
+  }, [])
+
+  const filtrados = partidos.filter(p => {
     const matchDeporte = deporte === 'todos' || p.deporte === deporte
     const matchEstado = estado === 'todos' || p.estado === estado
     const matchBusqueda = !busqueda ||
@@ -36,17 +54,17 @@ export default function PartidosPage() {
     return matchDeporte && matchEstado && matchBusqueda
   })
 
-  const enVivoCount = PARTIDOS_MOCK.filter(p => p.estado === 'en_vivo').length
+  const enVivoCount = partidos.filter(p => p.estado === 'en_vivo').length
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white mb-1">Partidos</h1>
-        <p className="text-zinc-500 text-sm">Todos los partidos con cuotas y estadísticas</p>
+        <p className="text-zinc-500 text-sm">Partidos de hoy con cuotas y estadísticas</p>
       </div>
 
-      {/* Filtros de deporte */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+      {/* Filtros deporte */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
         {DEPORTES.map(({ key, label, emoji }) => (
           <button
             key={key}
@@ -64,9 +82,9 @@ export default function PartidosPage() {
         ))}
       </div>
 
-      {/* Filtros de estado y búsqueda */}
+      {/* Filtros estado + búsqueda */}
       <div className="flex flex-col md:flex-row gap-3">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {ESTADOS.map(({ key, label }) => (
             <button
               key={key}
@@ -97,15 +115,23 @@ export default function PartidosPage() {
       </div>
 
       {/* Resultados */}
-      {filtrados.length === 0 ? (
+      {cargando ? (
+        <div className="flex items-center justify-center py-20 text-zinc-500">
+          <Loader2 size={24} className="animate-spin mr-3" />
+          <span>Cargando partidos...</span>
+        </div>
+      ) : filtrados.length === 0 ? (
         <div className="text-center py-16 text-zinc-500">
           <p className="text-lg mb-2">No hay partidos</p>
           <p className="text-sm">Prueba con otros filtros</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtrados.map(p => <TarjetaPartido key={p.id} partido={p} />)}
-        </div>
+        <>
+          <p className="text-xs text-zinc-600">{filtrados.length} partido{filtrados.length !== 1 ? 's' : ''} encontrado{filtrados.length !== 1 ? 's' : ''}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filtrados.map(p => <TarjetaPartido key={p.id} partido={p} />)}
+          </div>
+        </>
       )}
     </div>
   )
